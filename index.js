@@ -66,7 +66,6 @@ async function run() {
       const result =await jobApplicationCollection.find(query).toArray();
       //not best way for aggregate
       for(const application of result){
-        console.log(application.job_id)
         const filter = {_id : new ObjectId(application.job_id)}
         const job= await jobCollection.findOne(filter)
         if(job){
@@ -82,6 +81,25 @@ async function run() {
     app.post ('/job-applications',async(req,res)=>{
       const application = req.body;
       const result = await jobApplicationCollection.insertOne(application);
+      //Not the best way (use Aggregate)
+      const id = application.job_id;
+      const query = {_id: new ObjectId(id)};
+      const job = await jobCollection.findOne(query)
+      let count = 0;
+      if(job.applicationCount){
+          count = job.applicationCount + 1;
+      }else{
+        count = 1
+      }
+
+      //now update the job info
+      const filter = {_id: new ObjectId(id)};
+      const updatedDoc = {
+        $set:{
+          applicationCount: count
+        },
+      }
+      const updateResult = await jobCollection.updateOne(filter,updatedDoc)
       res.send(result);
     })
 
