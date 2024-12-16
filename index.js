@@ -48,10 +48,29 @@ async function run() {
         res.send(result);
     })
 
+    app.post('/jobs',async(req,res)=>{
+      const newJob = req.body;
+      const result = await jobCollection.insertOne(newJob);
+      res.send(result)
+    })
+
+     //job application related APIs
     app.get('/job-application',async(req,res)=>{
       const email = req.query.email;
       const query = {applicant_email: email}
       const result =await jobApplicationCollection.find(query).toArray();
+      //not best way for aggregate
+      for(const application of result){
+        console.log(application.job_id)
+        const filter = {_id : new ObjectId(application.job_id)}
+        const job= await jobCollection.findOne(filter)
+        if(job){
+          application.title = job.title
+          application.company = job.company
+          application.company_logo = job.company_logo
+          application.location = job.location
+        }
+      }
       res.send(result);
     })
 
